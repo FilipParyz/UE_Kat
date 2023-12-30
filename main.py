@@ -1,9 +1,22 @@
 import tkinter as tk
 from functools import partial
 try:
+    import TicTacToe
+except ModuleNotFoundError:
+    pass
+try:
     import TableTennis
+except ModuleNotFoundError:
+    pass
+try:
     import Snake
+except ModuleNotFoundError:
+    pass
+try:
     import Saper
+except ModuleNotFoundError:
+    pass
+try:
     import Checkers
 except ModuleNotFoundError:
     pass
@@ -61,17 +74,17 @@ class App(tk.Tk):
         self.button = tk.Button(self.games_window, text="Table Tennis", font=("Arial", 24), bg="black", fg="white", command=partial(TableTennis.main))
         self.button.pack(padx=10, pady=10)
 
+        self.button = tk.Button(self.games_window, text="TicTacToe", font=("Arial", 24), bg="black", fg="white", command=partial(TicTacToe.main))
+        self.button.pack(padx=10, pady=10)
+
         self.button = tk.Button(self.games_window, text="Snake", font=("Arial", 24), bg="black", fg="white", command=partial(Snake.main))
         self.button.pack(padx=10, pady=10)
 
-        # self.button = tk.Button(self.games_window, text="Saper", bg="black", fg="white", command=partial(Saper.main))
-        # self.button.pack(padx=10, pady=10)
-
+        self.button = tk.Button(self.games_window, text="Back", font=("Arial", 24), bg="white", fg="black", command=partial(self.close_subwindow, self.games_window))
+        self.button.pack(padx=10, pady=20)
+        
         # self.button = tk.Button(self.games_window, text="Checkers", bg="black", fg="white", command=partial(Checkers.main))
         # self.button.pack(padx=10, pady=10)
-
-        button = tk.Button(self.games_window, text="Back", font=("Arial", 24), bg="white", fg="black", command=partial(self.close_subwindow, self.games_window))
-        button.pack(padx=10, pady=20)
         
         self.games_window.focus()
         self.games_window.mainloop()

@@ -2,6 +2,8 @@ import tkinter as tk
 import random
 from tkinter import messagebox
 
+global buttons, winner, game_board, current_player
+
 def check_winner(board):
     for row in board:
         if row.count(row[0]) == len(row) and row[0] != "":
@@ -16,9 +18,9 @@ def check_winner(board):
     return False
 
 def button_click(row, col):
-    global current_player
+    global current_player, winner, buttons, game_board
     if buttons[row][col]["text"] == "" and not winner:
-        buttons[row][col]["text"] = "X"  # Cz³owiek wykonuje ruch
+        buttons[row][col]["text"] = "X"  # Czï¿½owiek wykonuje ruch
         game_board[row][col] = "X"
         if check_winner(game_board):
             messagebox.showinfo("Tic Tac Toe", "Player X wins!")
@@ -29,7 +31,16 @@ def button_click(row, col):
         else:
             computer_move()
 
+def reset_board():
+    global winner, game_board, buttons
+    winner = False
+    game_board = [["" for _ in range(3)] for _ in range(3)]
+    for row in buttons:
+        for button in row:
+            button["text"] = ""
+
 def computer_move():
+    global buttons, game_board
     available_moves = [(r, c) for r in range(3) for c in range(3) if buttons[r][c]["text"] == ""]
     if available_moves:
         row, col = random.choice(available_moves)
@@ -42,34 +53,30 @@ def computer_move():
             messagebox.showinfo("Tic Tac Toe", "It's a tie!")
             reset_board()
 
-def reset_board():
-    global winner, game_board
-    winner = False
+def main():
+    global buttons, winner, current_player, game_board
+    root = tk.Tk()
+    root.title("Tic Tac Toe")
+
     game_board = [["" for _ in range(3)] for _ in range(3)]
-    for row in buttons:
-        for button in row:
-            button["text"] = ""
+    buttons = []
 
-# Utworzenie okna g³ównego
-root = tk.Tk()
-root.title("Tic Tac Toe")
+    for i in range(3):
+        button_row = []
+        for j in range(3):
+            button = tk.Button(root, text="", font=("Arial", 20), width=5, height=2,
+                            command=lambda row=i, col=j: button_click(row, col))
+            button.grid(row=i, column=j)
+            button_row.append(button)
+        buttons.append(button_row)
 
-game_board = [["" for _ in range(3)] for _ in range(3)]
-buttons = []
+    current_player = random.choice(["X", "O"])  # Losowe wybranie gracza rozpoczynajï¿½cego
+    winner = False
 
-for i in range(3):
-    button_row = []
-    for j in range(3):
-        button = tk.Button(root, text="", font=("Arial", 20), width=5, height=2,
-                           command=lambda row=i, col=j: button_click(row, col))
-        button.grid(row=i, column=j)
-        button_row.append(button)
-    buttons.append(button_row)
+    if current_player == "O":
+        computer_move()
 
-current_player = random.choice(["X", "O"])  # Losowe wybranie gracza rozpoczynaj¹cego
-winner = False
+    root.mainloop()
 
-if current_player == "O":
-    computer_move()
-
-root.mainloop()
+if __name__ == "__main__":
+    main()
