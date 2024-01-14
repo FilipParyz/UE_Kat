@@ -98,7 +98,12 @@ def prevent_paddle_beyond_boundaries():
     elif paddle2_coords[3] > HEIGHT:
         canvas.move(paddle2, 0, HEIGHT - paddle2_coords[3])
 
-
+def CenterWindow(root, width, height):
+    screen_width = root.winfo_screenwidth()
+    screen_height = root.winfo_screenheight()
+    x = (screen_width/2) - (width/2)
+    y = (screen_height/2) - (height/2)
+    root.geometry('%dx%d+%d+%d' % (width, height, x, y))
 # Function to handle key press events
 def on_key_press(event):
     global direction_paddle1, direction_paddle2
@@ -164,6 +169,7 @@ canvas.bind_all('<KeyRelease>', on_key_release)
 # Start the game loop
 update_ball()
 move_paddle_smoothly()
+CenterWindow(root, WIDTH, HEIGHT)
 
 # Run the application
 root.mainloop()
