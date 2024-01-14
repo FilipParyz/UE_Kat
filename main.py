@@ -12,7 +12,7 @@ try:
 except ModuleNotFoundError:
     pass
 try:
-    import Snake
+    from Snake import SnakeGame
 except ModuleNotFoundError:
     pass
 try:
@@ -28,8 +28,8 @@ class App(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title("Gamehub")
-        window_width = 1200
-        window_height = 600
+        window_width = 900
+        window_height = 900
         screen_width = self.winfo_screenwidth()
         screen_height = self.winfo_screenheight()
         center_x = int(screen_width/2 - window_width / 2)
@@ -49,6 +49,13 @@ class App(tk.Tk):
     def playWarcaby(self):
         game = Warcaby()
         game.run_game()
+    
+    def playSnake(self):
+        self.snake_window = tk.Toplevel(self)
+        self.snake_window.title("Snaky")
+        self.snake_window.configure(bg=self.cget("bg"))
+        self.snake_window.resizable(True, True)
+        SnakeGame(self.snake_window)
 
     def create_widgets(self):
         self.label = tk.Label(self, text="Gamehub", font=("Arial", 24), bg="black", fg="white")
@@ -84,7 +91,7 @@ class App(tk.Tk):
         self.button = tk.Button(self.games_window, text="TicTacToe", font=("Arial", 24), bg="black", fg="white", command=partial(TicTacToe.main))
         self.button.pack(padx=10, pady=10)
 
-        self.button = tk.Button(self.games_window, text="Snake", font=("Arial", 24), bg="black", fg="white", command=partial(Snake.main))
+        self.button = tk.Button(self.games_window, text="Snake", font=("Arial", 24), bg="black", fg="white", command=partial(self.playSnake))
         self.button.pack(padx=10, pady=10)
         
         self.button = tk.Button(self.games_window, text="Saper", font=("Arial", 24), bg="black", fg="white", command=partial(Saper.main))
