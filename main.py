@@ -55,6 +55,7 @@ class App(tk.Tk):
         self.snake_window.title("Snaky")
         self.snake_window.configure(bg=self.cget("bg"))
         self.snake_window.resizable(True, True)
+        self.snake_window.focus()
         SnakeGame(self.snake_window)
 
     def create_widgets(self):
