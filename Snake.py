@@ -1,11 +1,6 @@
-# Autor: Mariusz Borczuk
-# Data: 2023-10-24
-# Opis: Gra Snake w Pythonie
-
-import tkinter
-import random
 import tkinter as tk
 from tkinter import messagebox
+import random
 
 # Stałe gry
 Game_Width = 840
@@ -18,34 +13,143 @@ Food_Color = "#FF0000"  # Czerwony
 Background_Color = "#000000"  # Czarny
 
 
-class Snanky:
-    # Inicializacja wężyka
-    def __init__(self):
-        self.body_size = Body_Parts
+class Snake:
+    def __init__(self, canvas, space_size, body_parts, snake_color):
+        self.body_size = body_parts
         self.coordinates = []
         self.squares = []
+        self.canvas = canvas
+        self.space_size = space_size
+        self.snake_color = snake_color
+        self.create_snake()
 
-        # Stworzenie wężyka w rogu ekranu
-        for i in range(0, Body_Parts):
+    def create_snake(self):
+        for i in range(self.body_size):
             self.coordinates.append([0, 0])
 
-        # Tworzenie ciała wężyka
         for x, y in self.coordinates:
-            stomach = canvas.create_oval(
-                x, y, x + Space_size, y + Space_size, fill=Snake_Color, tag="snake"
+            stomach = self.canvas.create_oval(
+                x, y, x + self.space_size, y + self.space_size, fill=self.snake_color, tag="snake"
             )
             self.squares.append(stomach)
 
-
-class The_Food:
-    # Inicializacja jedzenia
-    def __init__(self):
-        x = random.randint(0, (int)(Game_Width / Space_size) - 1) * Space_size
-        y = random.randint(0, (int)(Game_Height / Space_size) - 1) * Space_size
+class Food:
+    def __init__(self, canvas, space_size, food_color):
+        x = random.randint(0, (int)(Game_Width / space_size) - 1) * space_size
+        y = random.randint(0, (int)(Game_Height / space_size) - 1) * space_size
 
         self.coordinates = [x, y]
-        # Tworzenie jedzenia japko
-        canvas.create_polygon(
+        self.canvas = canvas
+        self.space_size = space_size
+        self.food_color = food_color
+        self.create_food()
+
+    def create_food(self):
+        x, y = self.coordinates
+        self.canvas.create_polygon(
+            x + self.space_size / 2,
+            y,
+            x + self.space_size,
+            y + self.space_size / 3,
+            x + 3 * self.space_size / 4,
+            y + self.space_size,
+            x + self.space_size / 4,
+            y + self.space_size,
+            x,
+            y + self.space_size / 3,
+            fill=self.food_color,
+            tag="Jedzonko",
+        )
+
+class SnakeGame:
+    def __init__(self, window):
+        self.window = window
+        self.canvas = tk.Canvas(
+            window,
+            bg=Background_Color,
+            height=Game_Height,
+            width=Game_Width,
+            highlightthickness=0,
+        )
+        self.canvas.pack()
+
+        self.wyniczek = 0
+        self.direction = "Right"
+        self.paused = False
+
+        # Tworzenie etykiety wyniczek
+        self.label = tk.Label(
+            window, text="Wyniczek: {0}".format(self.wyniczek), font=("Comic Sans", 30)
+        )
+        self.label.pack()
+
+        self.snake = Snake(self.canvas, Space_size, Body_Parts, Snake_Color)
+        self.food = Food(self.canvas, Space_size, Food_Color)
+
+        self.initialize_game()
+        self.start_game()
+
+    def initialize_game(self):
+        self.window.update()
+        window_width = self.window.winfo_width()
+        window_height = self.window.winfo_height()
+        screen_width = self.window.winfo_screenwidth()
+        screen_height = self.window.winfo_screenheight()
+
+        x = int(screen_width / 2 - window_width / 2)
+        y = int(screen_height / 2 - window_height / 2)
+
+        self.window.geometry(f"{window_width}x{window_height}+{x}+{y}")
+
+        self.window.bind("Q", lambda event: self.window.destroy())
+        self.window.bind("<Up>", lambda event: self.change_direction("up"))
+        self.window.bind("<Down>", lambda event: self.change_direction("down"))
+        self.window.bind("<Left>", lambda event: self.change_direction("left"))
+        self.window.bind("<Right>", lambda event: self.change_direction("right"))
+        self.window.bind("w", lambda event: self.change_direction("up"))
+        self.window.bind("a", lambda event: self.change_direction("left"))
+        self.window.bind("s", lambda event: self.change_direction("down"))
+        self.window.bind("d", lambda event: self.change_direction("right"))
+        self.window.bind("<Escape>", lambda event: self.pause_game())
+        self.window.bind("<BackSpace>", lambda event: self.restart_game())
+        self.window.bind("Q", lambda event: self.window.destroy())
+
+    def start_game(self):
+        self.next_turn()
+        self.window.mainloop()
+
+    def change_direction(self, new_direction):
+        if new_direction == "left" and self.direction != "Right":
+            self.direction = "Left"
+        elif new_direction == "right" and self.direction != "Left":
+            self.direction = "Right"
+        elif new_direction == "up" and self.direction != "Down":
+            self.direction = "Up"
+        elif new_direction == "down" and self.direction != "Up":
+            self.direction = "Down"
+
+    def restart_game(self):
+        self.wyniczek = 0
+        self.label.config(text="Wyniczek: {0}".format(self.wyniczek))
+        self.canvas.delete(tk.ALL)
+
+        self.direction = "Right"
+
+        self.snake.coordinates = []
+        self.snake.squares = []
+        for i in range(Body_Parts):
+            self.snake.coordinates.append([0, 0])
+
+        for x, y in self.snake.coordinates:
+            stomach = self.canvas.create_oval(
+                x, y, x + Space_size, y + Space_size, fill=Snake_Color, tag="snake"
+            )
+            self.snake.squares.append(stomach)
+
+        x = random.randint(0, (int)(Game_Width / Space_size) - 1) * Space_size
+        y = random.randint(0, (int)(Game_Height / Space_size) - 1) * Space_size
+        self.food.coordinates = [x, y]
+        self.canvas.create_polygon(
             x + Space_size / 2,
             y,
             x + Space_size,
@@ -60,306 +164,112 @@ class The_Food:
             tag="Jedzonko",
         )
 
-def popup():
-    popup_window = tkinter.Toplevel()
-    popup_window.title("Welcome to Snanky!")
-    popup_window.geometry("860x710")
-    popup_window.resizable(False, False)
-    
-    #adding a label with controls
-    label = tkinter.Label(
-        popup_window, text="Controls:", font=("Comic Sans", 14)
-    )
-    label.pack(pady=20)
-    label = tkinter.Label(
-        popup_window, text="W, A, S, D or Arrow keys to move", font=("Comic Sans", 14)
-    )
-    label.pack(pady=20)
-    label = tkinter.Label(
-        popup_window, text="Backspace to restart", font=("Comic Sans", 14)
-    )
-    label.pack(pady=20)
-    label = tkinter.Label(
-        popup_window, text="Q to quit", font=("Comic Sans", 14)
-    )
-    label.pack(pady=20)
-    label = tkinter.Label(
-        popup_window, text="Esc to pause", font=("Comic Sans", 14)
-    )
-    label.pack(pady=20)
-  
+        self.window.bind("<Escape>", lambda event: self.toggle_pause())
 
-    label = tkinter.Label(
-        popup_window, text="Press the button or Enter to start the game!", font=("Comic Sans", 14)
-    )
-    label.pack(pady=20)
-    
-    def close_popup(event=None):
-        popup_window.destroy()
-    
-    button = tkinter.Button(
-        popup_window, text="Start Game", font=("Comic Sans", 14), command=close_popup
-    )
-    button.pack(pady=10)
-    
-    popup_window.bind("<Return>", close_popup)
-    
-    popup_window.focus_set()
-    popup_window.grab_set()
-    popup_window.wait_window()   
-   
-   
-def toggle_pause():
-    global paused
-    paused = not paused
+    def toggle_pause(self):
+        self.paused = not self.paused
 
-
-def pause():
-    global paused
-    if not paused:
-        paused = True
-        window.bind("<Escape>", lambda event: toggle_pause())
-    else:
-        paused = False
-        window.unbind("<Escape>")
-
-
-def restart():
-    global wyniczek
-    wyniczek = 0
-    label.config(text="Wyniczek: {0}".format(wyniczek))
-    canvas.delete(tkinter.ALL)
-
-    #zmiana kierunku znow na prawo
-    global direction
-    direction = "Right"
-
-    # przywracanie weza do pozycji początkowej
-    snake.coordinates = []
-    snake.squares = []
-    for i in range(0, Body_Parts):
-        snake.coordinates.append([0, 0])
-    for x, y in snake.coordinates:
-        stomach = canvas.create_oval(
-            x, y, x + Space_size, y + Space_size, fill=Snake_Color, tag="snake"
-        )
-        snake.squares.append(stomach)
-    # przywracanie jedzenia do pozycji początkowej
-    x = random.randint(0, (int)(Game_Width / Space_size) - 1) * Space_size
-    y = random.randint(0, (int)(Game_Height / Space_size) - 1) * Space_size
-    Jedzonko.coordinates = [x, y]
-    canvas.create_polygon(
-        x + Space_size / 2,
-        y,
-        x + Space_size,
-        y + Space_size / 3,
-        x + 3 * Space_size / 4,
-        y + Space_size,
-        x + Space_size / 4,
-        y + Space_size,
-        x,
-        y + Space_size / 3,
-        fill=Food_Color,
-        tag="Jedzonko",
-    )
-    window.bind("<Escape>", lambda event: toggle_pause())
-
-def Check_Collisions(snakey):
-    x, y = snakey.coordinates[0]
-    # Sprawdź, czy wąż uderzył w ścianę
-    str1= "Ściana"
-    if x < 0 or x >= Game_Width:
-        str1= "Ściana!"
-        Game_Over(str1)
-        return True, str1
-    elif y < 0 or y >= Game_Height:
-        str1= "Ściana!"
-        Game_Over(str1)
-        return True, str1
-    # Sprawdź, czy wąż zjadł siebie i napewno przegrywa
-    for body_part in snakey.coordinates[1:]:
-        if x == body_part[0] and y == body_part[1]:
-            str1= "Zjadł siebie!"
-            Game_Over(str1)
-            return True, str1
-
-    return False
-
-def Game_Over(str1):
-    # Usuń wszystko z canvas
-    canvas.delete(tkinter.ALL)
-
-    # Wyświetl komunikat o przegranej
-    if str1 == "Ściana!":
-        canvas.create_text(
-            canvas.winfo_width() / 2,
-            canvas.winfo_height() / 2,
-            font=("Comic Sans", 80),
-            text=f"({str1})",
-            fill="purple",
-            tag="gameover",
-        )
-        continue_game = messagebox.askyesno("Przegranko ;(", "Czy chcesz kontynuować?")
-        if continue_game:
-            restart()
+    def pause_game(self):
+        if not self.paused:
+            self.paused = True
+            self.window.bind("<Escape>", lambda event: self.toggle_pause())
         else:
-            messagebox.showinfo("Przegranko ;(", "Dzięki za granie!")
-            window.destroy()
-    
-    elif str1 == "Zjadł siebie!":
-        canvas.create_text(
-            canvas.winfo_width() / 2,
-            canvas.winfo_height() / 2,
-            font=("Comic Sans", 80),
-            text=f"{str1}",
-            fill="purple",
-            tag="gameover",
-        )
-        continue_game = messagebox.askyesno("Przegranko ;(", "Czy chcesz kontynuować?")
-        if continue_game:
-            restart()
+            self.paused = False
+            self.window.unbind("<Escape>")
+
+    def check_collisions(self):
+        x, y = self.snake.coordinates[0]
+
+        if x < 0 or x >= Game_Width or y < 0 or y >= Game_Height:
+            self.game_over("Ściana!")
+
+        for body_part in self.snake.coordinates[1:]:
+            if x == body_part[0] and y == body_part[1]:
+                self.game_over("Zjadł siebie!")
+
+    def game_over(self, str1):
+        self.canvas.delete(tk.ALL)
+
+        if str1 == "Ściana!":
+            self.canvas.create_text(
+                self.canvas.winfo_width() / 2,
+                self.canvas.winfo_height() / 2,
+                font=("Comic Sans", 80),
+                text=f"({str1})",
+                fill="purple",
+                tag="gameover",
+            )
+            continue_game = messagebox.askyesno("Przegranko ;(", "Czy chcesz kontynuować?")
+            if continue_game:
+                self.restart_game()
+            else:
+                messagebox.showinfo("Przegranko ;(", "Dzięki za granie!")
+                self.window.destroy()
+        elif str1 == "Zjadł siebie!":
+            self.canvas.create_text(
+                self.canvas.winfo_width() / 2,
+                self.canvas.winfo_height() / 2,
+                font=("Comic Sans", 80),
+                text=f"{str1}",
+                fill="purple",
+                tag="gameover",
+            )
+            continue_game = messagebox.askyesno("Przegranko ;(", "Czy chcesz kontynuować?")
+            if continue_game:
+                self.restart_game()
+            else:
+                messagebox.showinfo("Przegranko ;(", "Dzięki za granie!")
+                self.window.destroy()
         else:
+            self.canvas.create_text(
+                self.canvas.winfo_width() / 2,
+                self.canvas.winfo_height() / 2,
+                font=("Comic Sans", 80),
+                text=f"Przegrana ;(",
+                fill="purple",
+                tag="gameover",
+            )
             messagebox.showinfo("Przegranko ;(", "Dzięki za granie!")
-            window.destroy()
-    else:
-        canvas.create_text(
-            canvas.winfo_width() / 2,
-            canvas.winfo_height() / 2,
-            font=("Comic Sans", 80),
-            text=f"Przegrana ;(",
-            fill="purple",
-            tag="gameover",
-        )
-        messagebox.showinfo("Przegranko ;(", "Dzięki za granie!")
-        window.destroy()
-           
-    
-def Next_Turn(snakey, Jedzonko):
-    """
-    Przesuwa węża na następny kafelek na podstawie bieżącego kierunku i aktualizuje canvas.
+            self.window.destroy()
 
-    Parametry:
-    Wężyk (Snakey): Obiekt węża, który ma zostać przesunięty.
-    Jedzonko (Jedzenie): Obiekt jedzenia, które wąż może zjeść.
+    def next_turn(self):
+        if self.paused:
+            self.window.after(Speed, self.next_turn)
+            return
 
-    Zwraca:
-    """
-    global paused
-    if paused:
-        window.after(Speed, Next_Turn, snakey, Jedzonko)
-        return
-    str1= ""
-    x, y = snakey.coordinates[0]
-    # Określ kierunek węża
-    if direction == "Up":
-        y -= Space_size
-    elif direction == "Down":
-        y += Space_size
-    elif direction == "Left":
-        x -= Space_size
-    elif direction == "Right":
-        x += Space_size
-    # Przenieś węża do nowej lokalizacji
-    snakey.coordinates.insert(0, (x, y))
-    # Stworzenie nowego kwadratu(brzusia) węża
-    stomach = canvas.create_oval(x, y, x + Space_size, y + Space_size, fill=Snake_Color)
+        x, y = self.snake.coordinates[0]
 
-    snakey.squares.insert(0, stomach)
-    # Sprawdź, czy wąż zjadł jedzenie
-    if x == Jedzonko.coordinates[0] and y == Jedzonko.coordinates[1]:
-        global wyniczek
-        wyniczek += 1
-        label.config(text="Wyniczek: {0}".format(wyniczek))
-        canvas.delete("Jedzonko")
-        Jedzonko = The_Food()
-    else:
-        # Usuń ostatni element z węża
-        del snakey.coordinates[-1]
-        canvas.delete(snakey.squares[-1])
-        del snakey.squares[-1]
-        # Sprawdź, czy wąż zjadł siebie
-    if Check_Collisions(snakey) == True:
-        Game_Over(str1)
-        #
-    else:
-        # Wywołaj tę funkcję ponownie po określonym czasie(Speed gry)
-        window.after(Speed, Next_Turn, snakey, Jedzonko)
+        if self.direction == "Up":
+            y -= Space_size
+        elif self.direction == "Down":
+            y += Space_size
+        elif self.direction == "Left":
+            x -= Space_size
+        elif self.direction == "Right":
+            x += Space_size
 
+        self.snake.coordinates.insert(0, (x, y))
+        stomach = self.canvas.create_oval(x, y, x + Space_size, y + Space_size, fill=Snake_Color)
 
+        self.snake.squares.insert(0, stomach)
 
+        if x == self.food.coordinates[0] and y == self.food.coordinates[1]:
+            self.wyniczek += 1
+            self.label.config(text="Wyniczek: {0}".format(self.wyniczek))
+            self.canvas.delete("Jedzonko")
+            self.food = Food(self.canvas, Space_size, Food_Color)
+        else:
+            del self.snake.coordinates[-1]
+            self.canvas.delete(self.snake.squares[-1])
+            del self.snake.squares[-1]
 
-def Change_Direction(New_Direction):
-    global direction
-    # Nie pozwól wężowi iść w przeciwnym kierunku niż obecny i skręć w nowym kierunku
-    if New_Direction == "left" and direction != "Right":
-        direction = "Left"
-    elif New_Direction == "right" and direction != "Left":
-        direction = "Right"
-    elif New_Direction == "up" and direction != "Down":
-        direction = "Up"
-    elif New_Direction == "down" and direction != "Up":
-        direction = "Down"
+        self.check_collisions()
 
+        self.window.after(Speed, self.next_turn)
 
-def main():
-    global direction
-    window = tkinter.Tk()
+if __name__ == "__main__":
+    window = tk.Tk()
     window.title("Snanky")
     window.resizable(False, False)
 
-    wyniczek = 0
-    direction = "Right"
-    paused = False
-    # Tworzenie etykiety wyniczek
-    label = tkinter.Label(
-        window, text="Wyniczek: {0}".format(wyniczek), font=("Comic Sans", 30)
-    )
-    label.pack()
-    # Tworzenie canvas gry za popupem
-    canvas = tkinter.Canvas(
-        window,
-        bg=Background_Color,
-        height=Game_Height,
-        width=Game_Width,
-        highlightthickness=0,
-    )
-
-    canvas.pack()
-
-    window.update()
-    # Ustawienie okna na środku ekranu 
-    window_width = window.winfo_width()
-    window_height = window.winfo_height()
-    screen_width = window.winfo_screenwidth()
-    screen_height = window.winfo_screenheight()
-    # Ustawienie okna na środku ekranu za popupem
-    x = int(screen_width / 2 - window_width / 2)
-    y = int(screen_height / 2 - window_height / 2)
-
-    # Dodanie obsługi pauzy
-    window.bind("Q", lambda event: window.destroy())
-    window.bind("<Up>", lambda event: Change_Direction(("up")))
-    window.bind("<Down>", lambda event: Change_Direction(("down")))
-    window.bind("<Left>", lambda event: Change_Direction(("left")))
-    window.bind("<Right>", lambda event: Change_Direction(("right")))
-    window.bind("w", lambda event: Change_Direction(("up")))
-    window.bind("a", lambda event: Change_Direction(("left")))
-    window.bind("s", lambda event: Change_Direction(("down")))
-    window.bind("d", lambda event: Change_Direction(("right")))
-    window.bind("<Escape>", lambda event: pause())
-    window.bind("<BackSpace>", lambda event: restart())
-    window.bind("Q", lambda event: window.destroy())
-
-
-    snake = Snanky()
-    Jedzonko = The_Food()
-    popup()
-
-    Next_Turn(snake, Jedzonko)
-
-    window.geometry(f"{window_width}x{window_height}+{x}+{y}")
-    # Uruchomienie okna
-    window.mainloop()
-
-if __name__ == "__main__":
-    main()
+    game = SnakeGame(window)
