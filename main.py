@@ -1,5 +1,8 @@
+import pygame
+import sys
 import tkinter as tk
 from functools import partial
+
 try:
     import TicTacToe
 except ModuleNotFoundError:
@@ -17,7 +20,7 @@ try:
 except ModuleNotFoundError:
     pass
 try:
-    import Checkers
+    from Warcaby import Warcaby
 except ModuleNotFoundError:
     pass
 
@@ -42,6 +45,10 @@ class App(tk.Tk):
         self.subwindows.remove(window)
         self.deiconify()
         self.focus()
+
+    def playWarcaby(self):
+        game = Warcaby()
+        game.run_game()
 
     def create_widgets(self):
         self.label = tk.Label(self, text="Gamehub", font=("Arial", 24), bg="black", fg="white")
@@ -79,12 +86,15 @@ class App(tk.Tk):
 
         self.button = tk.Button(self.games_window, text="Snake", font=("Arial", 24), bg="black", fg="white", command=partial(Snake.main))
         self.button.pack(padx=10, pady=10)
+        
+        self.button = tk.Button(self.games_window, text="Saper", font=("Arial", 24), bg="black", fg="white", command=partial(Saper.main))
+        self.button.pack(padx=10, pady=10)
+
+        self.button = tk.Button(self.games_window, text="Warcaby", font=("Arial", 24), bg="black", fg="white", command=partial(self.playWarcaby))
+        self.button.pack(padx=10, pady=10)
 
         self.button = tk.Button(self.games_window, text="Back", font=("Arial", 24), bg="white", fg="black", command=partial(self.close_subwindow, self.games_window))
         self.button.pack(padx=10, pady=20)
-        
-        # self.button = tk.Button(self.games_window, text="Checkers", bg="black", fg="white", command=partial(Checkers.main))
-        # self.button.pack(padx=10, pady=10)
         
         self.games_window.focus()
         self.games_window.mainloop()
