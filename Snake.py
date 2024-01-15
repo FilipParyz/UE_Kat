@@ -149,11 +149,23 @@ class SnakeGame:
         x = random.randint(0, (int)(self.GAME_WIDTH / self.SPACE_SIZE) - 1) * self.SPACE_SIZE
         y = random.randint(0, (int)(self.GAME_HEIGHT / self.SPACE_SIZE) - 1) * self.SPACE_SIZE
         self.food.coordinates = [x, y]
-        self.canvas.create_rectangle(
-            x, y, x + self.SPACE_SIZE, y + self.SPACE_SIZE, fill=self.FOOD_COLOR, tag="Jedzonko"
+        self.canvas.create_polygon(
+            x + self.SPACE_SIZE / 2,
+            y,
+            x + self.SPACE_SIZE,
+            y + self.SPACE_SIZE / 3,
+            x + 3 * self.SPACE_SIZE / 4,
+            y + self.SPACE_SIZE,
+            x + self.SPACE_SIZE / 4,
+            y + self.SPACE_SIZE,
+            x,
+            y + self.SPACE_SIZE / 3,
+            fill=self.FOOD_COLOR,
+            tag="Jedzonko",
         )
 
-        self.window.bind("<Escape>", lambda event: self.toggle_pause())
+        if hasattr(self, "continue_game") and self.continue_game is not None:
+            self.continue_game.destroy()
 
     
     def toggle_pause(self, event=None):
@@ -182,6 +194,7 @@ class SnakeGame:
         )
 
         continue_game = tk.Toplevel(self.window)
+        self.continue_game = continue_game
         continue_game.title("Przegranko ;(")
         window_width = max(600, continue_game.winfo_reqwidth())
         window_height = max(300, continue_game.winfo_reqheight())
@@ -208,7 +221,7 @@ class SnakeGame:
             font=("Comic Sans", 30),
             fg="white",
             bg="black",
-            command=self.restart_game
+             command=lambda: [self.restart_game(), continue_game.destroy()]
         ).pack(fill='both', expand=True)
 
         tk.Button(
@@ -217,10 +230,11 @@ class SnakeGame:
             font=("Comic Sans", 30),
             fg="white",
             bg="black",
-            command=self.game_won
+            command=lambda: [self.game_won(), continue_game.destroy()]
         ).pack(fill='both', expand=True)
 
         self.window.wait_window(continue_game)
+        
 
     def game_won(self):
         # Get the current score
@@ -275,8 +289,35 @@ class SnakeGame:
                 # Save the updated leaderboard to the file
                 with open("leaderboard.txt", "w") as file:
                     file.writelines(leaderboard)
-        
+        else:
+            # Show the leaderboard if the player's score is not higher
+            LoserLabel = tk.Toplevel(self.window)
+            LoserLabel.title("Przegranko ;(")
+            window_width = max(600, LoserLabel.winfo_reqwidth())
+            window_height = max(300, LoserLabel.winfo_reqheight())
+            screen_width = LoserLabel.winfo_screenwidth()
+            screen_height = LoserLabel.winfo_screenheight()
+            x = int(screen_width / 2 - window_width / 2)
+            y = int(screen_height / 2.27 - window_height )
+            LoserLabel.geometry(f"{window_width}x{window_height}+{x}+{y}")
+            LoserLabel.configure(bg=self.BACKGROUND_COLOR)
+            LoserLabel.resizable(False, False)
+            LoserLabel.focus()
 
+            tk.Label(
+                LoserLabel,
+                text="Przegrałeś!"+"\n"+
+                f"Twój wyniczek: {current_score}\nNajwyższy wyniczek: {highest_score}",
+                font=("Comic Sans", 30),
+                fg="white",
+                bg="black"
+            ).pack(fill='both', expand=True)
+                
+            #after 5 seconds, destroy the label window
+            self.window.after(5000, lambda: LoserLabel.destroy())
+            if hasattr(self, "continue_game") and self.continue_game is not None:
+                self.continue_game.destroy()
+            
     def next_turn(self):
         if self.paused:
             self.window.after(self.SPEED, self.next_turn)
