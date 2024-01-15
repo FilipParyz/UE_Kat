@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import messagebox
+from tkinter import messagebox, simpledialog
 import random
 
 class Snake:
@@ -217,11 +217,65 @@ class SnakeGame:
             font=("Comic Sans", 30),
             fg="white",
             bg="black",
-            command=self.window.destroy
+            command=self.game_won
         ).pack(fill='both', expand=True)
 
         self.window.wait_window(continue_game)
 
+    def game_won(self):
+        # Get the current score
+        current_score = self.wyniczek
+
+        # Open and read the leaderboard file
+        try:
+            with open("leaderboard.txt", "r") as file:
+                leaderboard = file.readlines()
+        except FileNotFoundError:
+            leaderboard = []
+
+        # Find the index where the "Snake:" section starts or create it if not found
+        snake_section_start = -1
+        for i, line in enumerate(leaderboard):
+            if "Snake:" in line:
+                snake_section_start = i
+                break
+
+        # If "Snake:" section is not found, create it
+        if snake_section_start == -1:
+            leaderboard.append("Snake:\n\n")
+            snake_section_start = len(leaderboard) - 1
+
+        # Get the highest score from the "Snake:" section
+        highest_score = 0
+
+        # If "Snake:" section is found, iterate through the scores and find the highest one
+        if snake_section_start != -1:
+            for line in leaderboard[snake_section_start + 1:]:
+                if "-" in line:
+                    score = int(line.split("-")[1])
+                    if score > highest_score:
+                        highest_score = score
+
+
+        # Determine if the player's score is higher
+        if current_score > highest_score:
+            # Ask for the player's character
+            character_entry = tk.simpledialog.askstring(
+                "New High Score!",
+                "What character do you want to use?",
+                parent=self.window,
+            )
+            # Update the "Snake:" section if a character is provided
+            if character_entry:
+                leaderboard.insert(
+                    snake_section_start + 1,
+                    f"{character_entry} - {current_score}\n",
+                )
+
+                # Save the updated leaderboard to the file
+                with open("leaderboard.txt", "w") as file:
+                    file.writelines(leaderboard)
+        
 
     def next_turn(self):
         if self.paused:

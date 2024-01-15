@@ -5,3 +5,9 @@ Dorota - 2137
 Marta - 1337
 Mariusz - 420
 Anna - 42069
+
+Snake:
+Mariusz - 3
+Mariusz - 2
+
+
