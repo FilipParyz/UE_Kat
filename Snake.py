@@ -172,47 +172,56 @@ class SnakeGame:
     def game_over(self, str1):
         self.canvas.delete(tk.ALL)
 
-        if str1 == "Ściana!":
-            self.canvas.create_text(
-                self.GAME_WIDTH / 2,
-                self.GAME_HEIGHT / 2,
-                font=("Comic Sans", 30),
-                text=f"({str1})",
-                fill="purple",
-                tag="gameover",
-            )
-            continue_game = messagebox.askyesno("Przegranko ;(", "Czy chcesz kontynuować?")
-            if continue_game:
-                self.restart_game()
-            else:
-                messagebox.showinfo("Przegranko ;(", "Dzięki za granie!")
-                self.window.destroy()
-        elif str1 == "Zjadł siebie!":
-            self.canvas.create_text(
-                self.GAME_WIDTH / 2,
-                self.GAME_HEIGHT / 2,
-                font=("Comic Sans", 30),
-                text=f"{str1}",
-                fill="purple",
-                tag="gameover",
-            )
-            continue_game = messagebox.askyesno("Przegranko ;(", "Czy chcesz kontynuować?")
-            if continue_game:
-                self.restart_game()
-            else:
-                messagebox.showinfo("Przegranko ;(", "Dzięki za granie!")
-                self.window.destroy()
-        else:
-            self.canvas.create_text(
-                self.GAME_WIDTH / 2,
-                self.GAME_HEIGHT / 2,
-                font=("Comic Sans", 30),
-                text=f"Przegrana ;(",
-                fill="purple",
-                tag="gameover",
-            )
-            messagebox.showinfo("Przegranko ;(", "Dzięki za granie!")
-            self.window.destroy()
+        self.canvas.create_text(
+            self.GAME_WIDTH / 2,
+            self.GAME_HEIGHT / 2,
+            font=("Comic Sans", 30),
+            text=f"({str1})",
+            fill="purple",
+            tag="gameover",
+        )
+
+        continue_game = tk.Toplevel(self.window)
+        continue_game.title("Przegranko ;(")
+        window_width = max(600, continue_game.winfo_reqwidth())
+        window_height = max(300, continue_game.winfo_reqheight())
+        screen_width = continue_game.winfo_screenwidth()
+        screen_height = continue_game.winfo_screenheight()
+        x = int(screen_width / 2 - window_width / 2)
+        y = int(screen_height / 2.27 - window_height )
+        continue_game.geometry(f"{window_width}x{window_height}+{x}+{y}")        
+        continue_game.configure(bg=self.BACKGROUND_COLOR)
+        continue_game.resizable(False, False)
+        continue_game.focus()
+
+        tk.Label(
+            continue_game,
+            text="Czy chcesz kontynuować?",
+            font=("Comic Sans", 30),
+            fg="white",
+            bg="black"
+        ).pack(fill='both', expand=True)
+
+        tk.Button(
+            continue_game,
+            text="Tak",
+            font=("Comic Sans", 30),
+            fg="white",
+            bg="black",
+            command=self.restart_game
+        ).pack(fill='both', expand=True)
+
+        tk.Button(
+            continue_game,
+            text="Nie",
+            font=("Comic Sans", 30),
+            fg="white",
+            bg="black",
+            command=self.window.destroy
+        ).pack(fill='both', expand=True)
+
+        self.window.wait_window(continue_game)
+
 
     def next_turn(self):
         if self.paused:
