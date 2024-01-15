@@ -2,16 +2,6 @@ import tkinter as tk
 from tkinter import messagebox
 import random
 
-# Stałe gry
-Game_Width = 840
-Game_Height = 680
-Speed = 300
-Space_size = 40
-Body_Parts = 3
-Snake_Color = "#800080"  # Fioletowy
-Food_Color = "#FF0000"  # Czerwony
-Background_Color = "#000000"  # Czarny
-
 
 class Snake:
     def __init__(self, canvas, space_size, body_parts, snake_color):
@@ -35,8 +25,8 @@ class Snake:
 
 class Food:
     def __init__(self, canvas, space_size, food_color):
-        x = random.randint(0, (int)(Game_Width / space_size) - 1) * space_size
-        y = random.randint(0, (int)(Game_Height / space_size) - 1) * space_size
+        x = random.randint(0, (int)(GAME_WIDTH / space_size) - 1) * space_size
+        y = random.randint(0, (int)(GAME_HEIGHT / space_size) - 1) * space_size
 
         self.coordinates = [x, y]
         self.canvas = canvas
@@ -64,30 +54,53 @@ class Food:
 class SnakeGame:
     def __init__(self, window):
         self.window = window
-        self.canvas = tk.Canvas(
-            window,
-            bg=Background_Color,
-            height=Game_Height,
-            width=Game_Width,
-            highlightthickness=0,
-        )
-        self.canvas.pack()
 
+        # Zmienne
+        self.GAME_WIDTH = 840
+        self.GAME_HEIGHT = 680
+        self.SPEED = 300
+        self.SPACE_SIZE = 40
+        self.BODY_PARTS = 3
+        self.SNAKE_COLOR = "#800080"
+        self.FOOD_COLOR = "#FF0000"
+        self.BACKGROUND_COLOR = "#000000"
         self.wyniczek = 0
         self.direction = "Right"
         self.paused = False
 
+        # Canvas
+        self.canvas = tk.Canvas(
+            window,
+            bg=self.BACKGROUND_COLOR,
+            height=self.GAME_HEIGHT,
+            width=self.GAME_WIDTH,
+            highlightthickness=0,
+        )
+        self.canvas.pack()
+        self.window.update()
+
         # Tworzenie etykiety wyniczek
         self.label = tk.Label(
             window, text="Wyniczek: {0}".format(self.wyniczek), font=("Comic Sans", 30)
-        )
-        self.label.pack()
+        ).pack()
 
         self.snake = Snake(self.canvas, Space_size, Body_Parts, Snake_Color)
         self.food = Food(self.canvas, Space_size, Food_Color)
 
         self.initialize_game()
         self.start_game()
+        #keybinds
+        self.window.bind("<space>", self.toggle_pause)
+        self.window.bind("<BackSpace>", self.restart_game)
+        self.window.bind("<Escape>", self.quit)
+        self.window.bind("<Up>", lambda event: self.change_direction("up"))
+        self.window.bind("<Down>", lambda event: self.change_direction("down"))
+        self.window.bind("<Left>", lambda event: self.change_direction("left"))
+        self.window.bind("<Right>", lambda event: self.change_direction("right"))
+        self.window.bind("w", lambda event: self.change_direction("up"))
+        self.window.bind("a", lambda event: self.change_direction("left"))
+        self.window.bind("s", lambda event: self.change_direction("down"))
+        self.window.bind("d", lambda event: self.change_direction("right"))
 
     def initialize_game(self):
         self.window.update()
@@ -101,18 +114,7 @@ class SnakeGame:
 
         self.window.geometry(f"{window_width}x{window_height}+{x}+{y}")
 
-        self.window.bind("Q", lambda event: self.window.destroy())
-        self.window.bind("<Up>", lambda event: self.change_direction("up"))
-        self.window.bind("<Down>", lambda event: self.change_direction("down"))
-        self.window.bind("<Left>", lambda event: self.change_direction("left"))
-        self.window.bind("<Right>", lambda event: self.change_direction("right"))
-        self.window.bind("w", lambda event: self.change_direction("up"))
-        self.window.bind("a", lambda event: self.change_direction("left"))
-        self.window.bind("s", lambda event: self.change_direction("down"))
-        self.window.bind("d", lambda event: self.change_direction("right"))
-        self.window.bind("<Escape>", lambda event: self.pause_game())
-        self.window.bind("<BackSpace>", lambda event: self.restart_game())
-        self.window.bind("Q", lambda event: self.window.destroy())
+    
 
     def start_game(self):
         self.next_turn()
@@ -146,8 +148,8 @@ class SnakeGame:
             )
             self.snake.squares.append(stomach)
 
-        x = random.randint(0, (int)(Game_Width / Space_size) - 1) * Space_size
-        y = random.randint(0, (int)(Game_Height / Space_size) - 1) * Space_size
+        x = random.randint(0, (int)(GAME_WIDTH / Space_size) - 1) * Space_size
+        y = random.randint(0, (int)(GAME_HEIGHT / Space_size) - 1) * Space_size
         self.food.coordinates = [x, y]
         self.canvas.create_polygon(
             x + Space_size / 2,
@@ -166,6 +168,18 @@ class SnakeGame:
 
         self.window.bind("<Escape>", lambda event: self.toggle_pause())
 
+    def quit(self, event):
+        self.root.destroy()
+        self.pop_up = tk.Toplevel()
+        self.pop_up.title("Snakey")
+        self.pop_up.resizable(False, False)
+        self.pop_up.geometry("300x100")
+        self.pop_up_label = tk.Label(
+            self.pop_up, text=f"Do you want to end game with score: {score}?", font=("Comic Sans", 30)
+        ).pack()
+        self.pop_up_button = tk.Button(self.pop_up, text="Yes", command=self.root.destroy).pack()
+        self.pop_up_button = tk.Button(self.pop_up, text="No", command=self.pop_up.destroy).pack()
+
     def toggle_pause(self):
         self.paused = not self.paused
 
@@ -180,7 +194,7 @@ class SnakeGame:
     def check_collisions(self):
         x, y = self.snake.coordinates[0]
 
-        if x < 0 or x >= Game_Width or y < 0 or y >= Game_Height:
+        if x < 0 or x >= GAME_WIDTH or y < 0 or y >= GAME_HEIGHT:
             self.game_over("Ściana!")
 
         for body_part in self.snake.coordinates[1:]:
