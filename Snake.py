@@ -91,7 +91,6 @@ class SnakeGame:
         # keybinds
         self.window.bind("<space>", self.toggle_pause)
         self.window.bind("<BackSpace>", self.restart_game)
-        self.window.bind("<Escape>", self.quit)
         self.window.bind("<Up>", lambda event: self.change_direction("up"))
         self.window.bind("<Down>", lambda event: self.change_direction("down"))
         self.window.bind("<Left>", lambda event: self.change_direction("left"))
@@ -156,21 +155,7 @@ class SnakeGame:
 
         self.window.bind("<Escape>", lambda event: self.toggle_pause())
 
-    def quit(self, event):
-        self.window.destroy()
-        self.pop_up = tk.Toplevel()
-        self.pop_up.title("Snakey")
-        self.pop_up.resizable(False, False)
-        self.pop_up.geometry("300x100")
-        self.pop_up_label = tk.Label(
-            self.pop_up, text=f"Do you want to end game with score: {self.wyniczek}?", font=("Comic Sans", 14)
-        )
-        self.pop_up_label.pack()
-        self.pop_up_button_yes = tk.Button(self.pop_up, text="Yes", command=self.window.destroy)
-        self.pop_up_button_yes.pack()
-        self.pop_up_button_no = tk.Button(self.pop_up, text="No", command=self.pop_up.destroy)
-        self.pop_up_button_no.pack()
-
+    
     def toggle_pause(self, event=None):
         self.paused = not self.paused
 
