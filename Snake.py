@@ -230,11 +230,13 @@ class SnakeGame:
             font=("Comic Sans", 30),
             fg="white",
             bg="black",
-            command=lambda: [self.game_won(), continue_game.destroy()]
+            command=lambda: [self.game_won(), self.Loser()]
         ).pack(fill='both', expand=True)
 
-        self.window.wait_window(continue_game)
         
+        self.window.wait_window(continue_game)
+        self.paused = True
+        self.window.after(1000, lambda: self.continue_game.destroy())
 
     def game_won(self):
         # Get the current score
@@ -270,13 +272,12 @@ class SnakeGame:
                     if score > highest_score:
                         highest_score = score
 
-
         # Determine if the player's score is higher
         if current_score > highest_score:
             # Ask for the player's character
             character_entry = tk.simpledialog.askstring(
-                "New High Score!",
-                "What character do you want to use?",
+                "Nowy najwyższy wyniczek!",
+                "Jakiej nazwy postaci chcesz użyć?",
                 parent=self.window,
             )
             # Update the "Snake:" section if a character is provided
@@ -289,34 +290,63 @@ class SnakeGame:
                 # Save the updated leaderboard to the file
                 with open("leaderboard.txt", "w") as file:
                     file.writelines(leaderboard)
-        else:
-            # Show the leaderboard if the player's score is not higher
-            LoserLabel = tk.Toplevel(self.window)
-            LoserLabel.title("Przegranko ;(")
-            window_width = max(600, LoserLabel.winfo_reqwidth())
-            window_height = max(300, LoserLabel.winfo_reqheight())
-            screen_width = LoserLabel.winfo_screenwidth()
-            screen_height = LoserLabel.winfo_screenheight()
+    def Loser(self):
+            # Open a new popup window if the current score is not the highest
+            popup = tk.Toplevel(self.window)
+            popup.title("Nie jesteś najlepszy ;(")
+            window_width = max(600, popup.winfo_reqwidth())
+            window_height = max(300, popup.winfo_reqheight())
+            screen_width = popup.winfo_screenwidth()
+            screen_height = popup.winfo_screenheight()
             x = int(screen_width / 2 - window_width / 2)
-            y = int(screen_height / 2.27 - window_height )
-            LoserLabel.geometry(f"{window_width}x{window_height}+{x}+{y}")
-            LoserLabel.configure(bg=self.BACKGROUND_COLOR)
-            LoserLabel.resizable(False, False)
-            LoserLabel.focus()
+            y = int(screen_height / 2.27 - window_height)
+            popup.geometry(f"{window_width}x{window_height}+{x}+{y}")
+            popup.configure(bg=self.BACKGROUND_COLOR)
+            popup.resizable(False, False)
+            popup.focus()
+            current_score = self.wyniczek
+            try:
+                with open("leaderboard.txt", "r") as file:
+                    leaderboard = file.readlines()
+            except FileNotFoundError:
+                leaderboard = []
+
+            # Find the index where the "Snake:" section starts or create it if not found
+            snake_section_start = -1
+            for i, line in enumerate(leaderboard):
+                if "Snake:" in line:
+                    snake_section_start = i
+                    break
+
+            # If "Snake:" section is not found, create it
+            if snake_section_start == -1:
+                leaderboard.append("Snake:\n\n")
+                snake_section_start = len(leaderboard) - 1
+
+            # Get the highest score from the "Snake:" section
+            highest_score = 0
+
+            # If "Snake:" section is found, iterate through the scores and find the highest one
+            if snake_section_start != -1:
+                for line in leaderboard[snake_section_start + 1:]:
+                    if "-" in line:
+                        score = int(line.split("-")[1])
+                        if score > highest_score:
+                            highest_score = score
 
             tk.Label(
-                LoserLabel,
-                text="Przegrałeś!"+"\n"+
+                popup,
+                text="Nie jesteś najlepszy!"+"\n"+
                 f"Twój wyniczek: {current_score}\nNajwyższy wyniczek: {highest_score}",
                 font=("Comic Sans", 30),
                 fg="white",
                 bg="black"
             ).pack(fill='both', expand=True)
-                
-            #after 5 seconds, destroy the label window
-            self.window.after(5000, lambda: LoserLabel.destroy())
-            if hasattr(self, "continue_game") and self.continue_game is not None:
-                self.continue_game.destroy()
+
+            # After 5 seconds, destroy the popup window
+            self.window.after(5000, lambda: popup.destroy())
+            self.window.after(5000, lambda: self.window.destroy())
+
             
     def next_turn(self):
         if self.paused:
