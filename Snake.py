@@ -163,7 +163,7 @@ class SnakeGame:
             fill=self.FOOD_COLOR,
             tag="Jedzonko",
         )
-
+        self.paused = not self.paused
         if hasattr(self, "continue_game") and self.continue_game is not None:
             self.continue_game.destroy()
 
@@ -237,6 +237,8 @@ class SnakeGame:
         self.window.wait_window(continue_game)
         self.paused = True
         self.window.after(1000, lambda: self.continue_game.destroy())
+        self.paused = False
+        
 
     def game_won(self):
         # Get the current score
