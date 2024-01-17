@@ -1,175 +1,163 @@
 import tkinter as tk
 import random
 
-# Constants
-WIDTH = 800
-HEIGHT = 600
-PADDLE_WIDTH = 20
-PADDLE_HEIGHT = 120
-BALL_SIZE = 25
-PADDLE_SPEED = 5
-BALL_SPEED = 5
+class TableTennisGame:
+    def __init__(self, root, width, height):
+        self.root = root
+        self.root.title("Table Tennis Game")
 
-# Initialize variables
-player1_score = 0
-player2_score = 0
+        self.WIDTH = width
+        self.HEIGHT = height
+        self.PADDLE_WIDTH = 20
+        self.PADDLE_HEIGHT = 120
+        self.BALL_SIZE = 25
+        self.PADDLE_SPEED = 5
+        self.BALL_SPEED = 5
+
+        self.player1_score = 0
+        self.player2_score = 0
+
+        self.direction_paddle1 = 0
+        self.direction_paddle2 = 0
+
+        self.create_widgets()
+        self.initialize_game()
+
+    def create_widgets(self):
+        self.canvas = tk.Canvas(self.root, width=self.WIDTH, height=self.HEIGHT, bg="grey15")
+        self.canvas.pack()
+
+        line_width = 5
+        self.canvas.create_rectangle(0, 0, self.WIDTH, self.HEIGHT, outline="white", width=line_width)
+
+        self.paddle1 = self.canvas.create_rectangle(0, self.HEIGHT / 2 - self.PADDLE_HEIGHT / 2,
+                                                   self.PADDLE_WIDTH, self.HEIGHT / 2 + self.PADDLE_HEIGHT / 2,
+                                                   fill="white")
+        self.paddle2 = self.canvas.create_rectangle(self.WIDTH - self.PADDLE_WIDTH,
+                                                   self.HEIGHT / 2 - self.PADDLE_HEIGHT / 2,
+                                                   self.WIDTH, self.HEIGHT / 2 + self.PADDLE_HEIGHT / 2,
+                                                   fill="white")
+        self.ball = self.canvas.create_oval(self.WIDTH / 2 - self.BALL_SIZE / 2,
+                                            self.HEIGHT / 2 - self.BALL_SIZE / 2,
+                                            self.WIDTH / 2 + self.BALL_SIZE / 2,
+                                            self.HEIGHT / 2 + self.BALL_SIZE / 2, fill="white")
+
+        dot_gap = 10
+        self.canvas.create_line(self.WIDTH / 2, 0, self.WIDTH / 2, self.HEIGHT, fill="white", dash=(dot_gap, dot_gap))
+
+        self.score_display1 = self.canvas.create_text(self.WIDTH / 4, 30, text="POINTS: 0", fill="white",
+                                                      font=("Helvetica", 16))
+        self.score_display2 = self.canvas.create_text(3 * self.WIDTH / 4, 30, text="POINTS: 0", fill="white",
+                                                      font=("Helvetica", 16))
+
+    def initialize_game(self):
+        self.ball_speed_x = self.BALL_SPEED * random.choice([-1, 1])
+        self.ball_speed_y = self.BALL_SPEED * random.choice([-1, 1])
+
+        self.canvas.bind_all('<KeyPress>', self.on_key_press)
+        self.canvas.bind_all('<KeyRelease>', self.on_key_release)
+
+        self.move_paddle_smoothly()
+        self.center_window()
+
+        self.update_ball()
+
+    def update_score(self, player):
+        if player == 1:
+            self.player1_score += 1
+        elif player == 2:
+            self.player2_score += 1
+        self.update_score_display()
+        self.reset_ball()
+
+    def update_score_display(self):
+        self.canvas.itemconfig(self.score_display1, text=f"POINTS: {self.player1_score}")
+        self.canvas.itemconfig(self.score_display2, text=f"POINTS: {self.player2_score}")
+
+    def reset_ball(self):
+        self.canvas.coords(self.ball, self.WIDTH / 2 - self.BALL_SIZE / 2, self.HEIGHT / 2 - self.BALL_SIZE / 2,
+                           self.WIDTH / 2 + self.BALL_SIZE / 2, self.HEIGHT / 2 + self.BALL_SIZE / 2)
+        self.ball_speed_x = self.BALL_SPEED * random.choice([-1, 1])
+        self.ball_speed_y = self.BALL_SPEED * random.choice([-1, 1])
+
+    def update_ball(self):
+        ball_coords = self.canvas.coords(self.ball)
+        ball_x = (ball_coords[0] + ball_coords[2]) / 2
+        ball_y = (ball_coords[1] + ball_coords[3]) / 2
+
+        self.check_collision_with_paddles(ball_x, ball_y)
+        self.check_collision_with_walls(ball_coords)
+        self.check_goal(ball_coords)
+
+        self.canvas.move(self.ball, self.ball_speed_x, self.ball_speed_y)
+        self.canvas.after(20, self.update_ball)
+
+    def check_collision_with_paddles(self, ball_x, ball_y):
+        paddle1_coords = self.canvas.coords(self.paddle1)
+        paddle2_coords = self.canvas.coords(self.paddle2)
+
+        if (paddle1_coords[0] < ball_x < paddle1_coords[2]) and (paddle1_coords[1] < ball_y < paddle1_coords[3]):
+            self.ball_speed_x = abs(self.ball_speed_x)
+
+        if (paddle2_coords[0] < ball_x < paddle2_coords[2]) and (paddle2_coords[1] < ball_y < paddle2_coords[3]):
+            self.ball_speed_x = -abs(self.ball_speed_x)
+
+    def check_collision_with_walls(self, ball_coords):
+        if ball_coords[1] <= 0 or ball_coords[3] >= self.HEIGHT:
+            self.ball_speed_y *= -1
+
+    def check_goal(self, ball_coords):
+        if ball_coords[0] <= 0:
+            self.update_score(2)
+        elif ball_coords[2] >= self.WIDTH:
+            self.update_score(1)
+
+    def move_paddle_smoothly(self):
+        paddle_speed = self.PADDLE_SPEED
+        self.canvas.move(self.paddle1, 0, paddle_speed * self.direction_paddle1)
+        self.canvas.move(self.paddle2, 0, paddle_speed * self.direction_paddle2)
+        self.prevent_paddle_beyond_boundaries()
+        self.canvas.after(10, self.move_paddle_smoothly)
+
+    def prevent_paddle_beyond_boundaries(self):
+        paddle1_coords = self.canvas.coords(self.paddle1)
+        paddle2_coords = self.canvas.coords(self.paddle2)
+
+        if paddle1_coords[1] < 0:
+            self.canvas.move(self.paddle1, 0, -paddle1_coords[1])
+        elif paddle1_coords[3] > self.HEIGHT:
+            self.canvas.move(self.paddle1, 0, self.HEIGHT - paddle1_coords[3])
+
+        if paddle2_coords[1] < 0:
+            self.canvas.move(self.paddle2, 0, -paddle2_coords[1])
+        elif paddle2_coords[3] > self.HEIGHT:
+            self.canvas.move(self.paddle2, 0, self.HEIGHT - paddle2_coords[3])
+
+    def on_key_press(self, event):
+        if event.keysym == 'Up':
+            self.direction_paddle2 = -1
+        elif event.keysym == 'Down':
+            self.direction_paddle2 = 1
+        elif event.keysym == 'w':
+            self.direction_paddle1 = -1
+        elif event.keysym == 's':
+            self.direction_paddle1 = 1
+
+    def on_key_release(self, event):
+        if event.keysym in ('Up', 'Down'):
+            self.direction_paddle2 = 0
+        elif event.keysym in ('w', 's'):
+            self.direction_paddle1 = 0
+
+    def center_window(self):
+        screen_width = self.root.winfo_screenwidth()
+        screen_height = self.root.winfo_screenheight()
+        x = (screen_width / 2) - (self.WIDTH / 2)
+        y = (screen_height / 2) - (self.HEIGHT / 2)
+        self.root.geometry('%dx%d+%d+%d' % (self.WIDTH, self.HEIGHT, x, y))
 
 
-# Function to update the score and reset the ball position
-def update_score(player):
-    global player1_score, player2_score
-    if player == 1:
-        player1_score += 1
-    elif player == 2:
-        player2_score += 1
-    update_score_display()
-    reset_ball()
-
-
-# Function to update the score display
-def update_score_display():
-    canvas.itemconfig(score_display1, text=f"POINTS: {player1_score}")
-    canvas.itemconfig(score_display2, text=f"POINTS: {player2_score}")
-
-
-# Function to reset the ball position
-def reset_ball():
-    canvas.coords(ball, WIDTH / 2 - BALL_SIZE / 2, HEIGHT / 2 - BALL_SIZE / 2,
-                  WIDTH / 2 + BALL_SIZE / 2, HEIGHT / 2 + BALL_SIZE / 2)
-    global ball_speed_x, ball_speed_y
-    ball_speed_x = BALL_SPEED * random.choice([-1, 1])
-    ball_speed_y = BALL_SPEED * random.choice([-1, 1])
-
-
-# Function to update the ball position
-def update_ball():
-    global ball_speed_x, ball_speed_y
-    ball_coords = canvas.coords(ball)
-    ball_x = (ball_coords[0] + ball_coords[2]) / 2
-    ball_y = (ball_coords[1] + ball_coords[3]) / 2
-
-    # Check collision with paddles
-    if (canvas.coords(paddle1)[0] < ball_x < canvas.coords(paddle1)[2]) and (
-            canvas.coords(paddle1)[1] < ball_y < canvas.coords(paddle1)[3]):
-        ball_speed_x = abs(ball_speed_x)
-
-    if (canvas.coords(paddle2)[0] < ball_x < canvas.coords(paddle2)[2]) and (
-            canvas.coords(paddle2)[1] < ball_y < canvas.coords(paddle2)[3]):
-        ball_speed_x = -abs(ball_speed_x)
-
-    # Check collision with top and bottom walls
-    if ball_coords[1] <= 0 or ball_coords[3] >= HEIGHT:
-        ball_speed_y *= -1
-
-    # Check if the ball passed the paddles
-    if ball_coords[0] <= 0:
-        update_score(2)
-    elif ball_coords[2] >= WIDTH:
-        update_score(1)
-
-    # Move the ball
-    canvas.move(ball, ball_speed_x, ball_speed_y)
-
-    # Schedule the next update
-    canvas.after(20, update_ball)
-
-
-# Function to move the paddles smoothly
-def move_paddle_smoothly():
-    paddle_speed = PADDLE_SPEED
-    canvas.move(paddle1, 0, paddle_speed * direction_paddle1)
-    canvas.move(paddle2, 0, paddle_speed * direction_paddle2)
-    prevent_paddle_beyond_boundaries()
-    canvas.after(10, move_paddle_smoothly)
-
-
-# Function to prevent paddles from going beyond the game window boundaries
-def prevent_paddle_beyond_boundaries():
-    paddle1_coords = canvas.coords(paddle1)
-    paddle2_coords = canvas.coords(paddle2)
-
-    if paddle1_coords[1] < 0:
-        canvas.move(paddle1, 0, -paddle1_coords[1])
-    elif paddle1_coords[3] > HEIGHT:
-        canvas.move(paddle1, 0, HEIGHT - paddle1_coords[3])
-
-    if paddle2_coords[1] < 0:
-        canvas.move(paddle2, 0, -paddle2_coords[1])
-    elif paddle2_coords[3] > HEIGHT:
-        canvas.move(paddle2, 0, HEIGHT - paddle2_coords[3])
-
-def CenterWindow(root, width, height):
-    screen_width = root.winfo_screenwidth()
-    screen_height = root.winfo_screenheight()
-    x = (screen_width/2) - (width/2)
-    y = (screen_height/2) - (height/2)
-    root.geometry('%dx%d+%d+%d' % (width, height, x, y))
-# Function to handle key press events
-def on_key_press(event):
-    global direction_paddle1, direction_paddle2
-    if event.keysym == 'Up':
-        direction_paddle2 = -1
-    elif event.keysym == 'Down':
-        direction_paddle2 = 1
-    elif event.keysym == 'w':
-        direction_paddle1 = -1
-    elif event.keysym == 's':
-        direction_paddle1 = 1
-
-
-# Function to handle key release events
-def on_key_release(event):
-    global direction_paddle1, direction_paddle2
-    if event.keysym in ('Up', 'Down'):
-        direction_paddle2 = 0
-    elif event.keysym in ('w', 's'):
-        direction_paddle1 = 0
-
-
-# Create the main window
-root = tk.Tk()
-root.title("Table Tennis Game")
-
-# Create the canvas
-canvas = tk.Canvas(root, width=WIDTH, height=HEIGHT, bg="grey15")
-canvas.pack()
-
-# Create the bounding box
-line_width = 5  # Adjust this value for the desired line thickness
-canvas.create_rectangle(0, 0, WIDTH, HEIGHT, outline="white", width=line_width)
-
-# Create the paddles and ball
-paddle1 = canvas.create_rectangle(0, HEIGHT / 2 - PADDLE_HEIGHT / 2, PADDLE_WIDTH,
-                                  HEIGHT / 2 + PADDLE_HEIGHT / 2, fill="white")
-paddle2 = canvas.create_rectangle(WIDTH - PADDLE_WIDTH, HEIGHT / 2 - PADDLE_HEIGHT / 2,
-                                  WIDTH, HEIGHT / 2 + PADDLE_HEIGHT / 2, fill="white")
-ball = canvas.create_oval(WIDTH / 2 - BALL_SIZE / 2, HEIGHT / 2 - BALL_SIZE / 2,
-                          WIDTH / 2 + BALL_SIZE / 2, HEIGHT / 2 + BALL_SIZE / 2, fill="white")
-
-# Create the dotted line
-dot_gap = 10
-canvas.create_line(WIDTH / 2, 0, WIDTH / 2, HEIGHT, fill="white", dash=(dot_gap, dot_gap))
-
-# Create the score displays
-score_display1 = canvas.create_text(WIDTH / 4, 30, text="POINTS: 0", fill="white", font=("Helvetica", 16))
-score_display2 = canvas.create_text(3 * WIDTH / 4, 30, text="POINTS: 0", fill="white", font=("Helvetica", 16))
-
-# Initialize ball speed
-ball_speed_x = BALL_SPEED * random.choice([-1, 1])
-ball_speed_y = BALL_SPEED * random.choice([-1, 1])
-
-# Initialize paddle directions
-direction_paddle1 = 0
-direction_paddle2 = 0
-
-# Bind key events
-canvas.bind_all('<KeyPress>', on_key_press)
-canvas.bind_all('<KeyRelease>', on_key_release)
-
-# Start the game loop
-update_ball()
-move_paddle_smoothly()
-CenterWindow(root, WIDTH, HEIGHT)
-
-# Run the application
-root.mainloop()
+if __name__ == "__main__":
+    root = tk.Tk()
+    game = TableTennisGame(root, 800, 600)
+    root.mainloop()
